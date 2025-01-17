@@ -2,16 +2,16 @@ import { getData } from "./dataDownload";
 import { menu } from "./menu.js";
 import { scatterPlot } from "./Scatterplot-trc";
 import * as d3 from "d3";
-import {barChart} from "./barChart-trc.js";
-import {getDistancePerWeek} from "./getWeeklyData.js";
+import { barChart } from "./barChart-trc.js";
+import { getDistancePerWeek } from "./getWeeklyData.js";
 
+let yearValue = "all"; 
+let activityValue = "all";
 
-let filteredData;
 const menuContainer = d3.select("#header");
 
 const xMenu = menuContainer.append("div").attr("class", "menu");
 const yMenu = menuContainer.append("div").attr("class", "menu");
-
 
 const yearOptions = [
   { value: "all", text: "All" },
@@ -34,27 +34,45 @@ const activityTypeOptions = [
 const scatterplot = d3.select("#chart1").append("svg");
 const barChartSelection = d3.select("#chart2").append("svg");
 
-
 async function main() {
   let data = await getData();
   //console.log(data);
-//   console.log(data);
-//   console.log("change");
+  //   console.log(data);
+  //   console.log("change");
   const plot1 = scatterPlot()
     .width(1000)
     .height(500)
     .data(data)
     .xValue((d) => d.start_date)
-    .yValue((d) => d.distance/1000)
+    .yValue((d) => d.distance / 1000)
     .xType("time")
     .margin({ top: 50, right: 50, bottom: 50, left: 80 })
     .radius(5)
     .xLabel("Date")
     .yLabel("Distance")
-    .tooltipValue((d)=> `<h4>${d.name}</h4><p>${(d.distance/1000).toFixed(1)}km<br>${d.start_date.toDateString()} `)
+    .tooltipValue(
+      (d) =>
+        `<h4>${d.name}</h4><p>${(d.distance / 1000).toFixed(
+          1
+        )}km<br>${d.start_date.toDateString()} `
+    )
     .colorValue((d) => d.sport_type);
 
   scatterplot.call(plot1);
+
+  let weeklyDistanceData = getDistancePerWeek(data, "all", "all");
+  console.log("weekly data", weeklyDistanceData);
+
+  const bc = barChart()
+    .width(1000)
+    .height(500)
+    .data(weeklyDistanceData)
+    .yValue((d) => d.distance / 1000)
+    .xValue((d) => d.week)
+    .yLabel("Distance tracked (km)")
+    .xLabel("Week of Year");
+
+  barChartSelection.call(bc);
 
   xMenu.call(
     menu()
@@ -63,12 +81,16 @@ async function main() {
       .options(yearOptions)
       .on("change", (value) => {
         console.log(value);
+        yearValue = value;
         if (value != "all") {
           plot1.filterOne((d) => d.start_date.getFullYear() === +value);
         } else {
           plot1.filterOne(null);
         }
         scatterplot.call(plot1);
+        weeklyDistanceData = getDistancePerWeek(data, yearValue, activityValue);
+        bc.data(weeklyDistanceData);
+        barChartSelection.call(bc)
       })
   );
 
@@ -78,31 +100,18 @@ async function main() {
       .labelText("Activity Type:")
       .options(activityTypeOptions)
       .on("change", (value) => {
-        console.log(value);
+        activityValue = value;
         if (value != "all") {
-            plot1.filterTwo((d) => d.sport_type === value);
-          } else {
-            plot1.filterTwo(null);
-          }
-          scatterplot.call(plot1);
+          plot1.filterTwo((d) => d.sport_type === value);
+        } else {
+          plot1.filterTwo(null);
+        }
+        scatterplot.call(plot1);
+        weeklyDistanceData = getDistancePerWeek(data, yearValue, activityValue);
+        bc.data(weeklyDistanceData);
+        barChartSelection.call(bc);
       })
   );
-
-  let weeklyDistanceData = getDistancePerWeek(data, (d)=>d.start_date.getFullYear()==2024, (d) => d.sport_type=="Run");
-  console.log("weekly data", weeklyDistanceData);
-
-
-  const bc = barChart()
-  .width(1000)
-  .height(500)
-  .data(weeklyDistanceData)
-  .yValue((d)=> d.distance)
-  .xValue((d)=> d.week)
-
-
-  barChartSelection.call(bc);
-
-
 
 }
 

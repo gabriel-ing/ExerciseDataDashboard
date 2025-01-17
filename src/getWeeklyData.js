@@ -6,7 +6,7 @@ function getWeekNumber(d) {
   return weekNo;
 }
 
-export function getDistancePerWeek(data, filterOne = null, filterTwo = null) {
+export function getDistancePerWeek(data, year = "all", activityType = "all") {
   let filteredData = data;
 
   filteredData.map((d) => {
@@ -15,11 +15,11 @@ export function getDistancePerWeek(data, filterOne = null, filterTwo = null) {
     return d;
   });
 
-  if (filterOne) {
-    filteredData = filteredData.filter(filterOne);
+  if (year!="all") {
+    filteredData = filteredData.filter((d)=>d.start_year===+year);
   }
-  if (filterTwo) {
-    filteredData = filteredData.filter(filterTwo);
+  if (activityType!="all") {
+    filteredData = filteredData.filter((d)=>d.sport_type===activityType);
   }
   const result = Object.groupBy(filteredData, ({ start_week }) => start_week);
 

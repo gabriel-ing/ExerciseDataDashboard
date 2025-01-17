@@ -6,7 +6,7 @@ export const barChart = () => {
   let data;
   let yValue;
   let xValue;
-  let margin = { top: 50, right: 50, bottom: 80, left: 50 };
+  let margin = { top: 50, right: 50, bottom: 50, left: 80 };
   let radius = 5;
   let colorValue;
   let colorList = [
@@ -25,7 +25,7 @@ export const barChart = () => {
   let xType;
   let yType;
   let x;
-  let y;
+  let heightScale;
   let filterOne = null;
   let filterTwo = null;
 
@@ -34,7 +34,7 @@ export const barChart = () => {
 
     //console.log(data);
     let filteredData = data;
-
+    let axisHeight = height - margin.top - margin.bottom;
     if (filterOne) {
       filteredData = filteredData.filter(filterOne);
     }
@@ -43,19 +43,17 @@ export const barChart = () => {
     }
     console.log(filteredData);
 
+    x = d3
+      .scaleBand()
+      .domain(filteredData.map(xValue))
+      .range([margin.left, width])
+      .padding(0.2);
 
-      x = d3
-        .scaleBand()
-        .domain(filteredData.map(xValue))
-        .range([margin.left, width - margin.right])
-        .padding(0.2);
-    
+    heightScale = d3
+      .scaleLinear()
+      .domain([0, d3.max(filteredData, yValue)])
+      .range([axisHeight, 0]);
 
-      y = d3
-        .scaleLinear()
-        .domain([0, d3.max(filteredData, yValue)])
-        .range([height - margin.bottom, margin.top]);
-    
     /* 
         const x = d3
         .scaleLinear()
@@ -69,20 +67,21 @@ export const barChart = () => {
         
         
         */
-    if (colorValue){
-    const colorScale = d3
-      .scaleOrdinal()
-      .domain(filteredData.map(colorValue))
-      .range(colorList);
-    };
+    if (colorValue) {
+      const colorScale = d3
+        .scaleOrdinal()
+        .domain(filteredData.map(colorValue))
+        .range(colorList);
+    }
     // marks.x = x(marks.x);
     // marks.y = y(marks.y) ;
     // marks.color = colorScale(marks.color);
 
     const marks = filteredData.map((d) => ({
       x: x(xValue(d)),
-      height: y(yValue(d)),
+      height: axisHeight - heightScale(yValue(d)),
       color: "#F2B8D5",
+      value: yValue(d).toFixed(1),
     }));
 
     const t = d3.transition().duration(1000);
@@ -97,20 +96,37 @@ export const barChart = () => {
             .append("rect")
             .attr("class", "bar")
             .attr("x", (d) => d.x)
-            .attr("y", (d) => height+margin.bottom)
+            .attr("y", (d) => height - margin.bottom)
             .attr("height", 0)
-            .attr("width", 50)
+            .attr("width", x.bandwidth())
             .attr("fill", (d) => d.color)
             .attr("stroke", "black")
             .attr("stroke-width", 0.5)
-            .call((enter) => enter.transition(t).attr("height", (d) => d.height)),
+            .on("mouseover", (event, d) => {
+              const barLabel = selection
+                .append("text")
+                .attr("class", "bar-labels")
+                .attr("text-anchor", "middle")
+                .attr("x", d.x+(x.bandwidth()/2))
+                .attr("y", height - margin.bottom - d.height - 10)
+                .transition().duration(100)
+                .text(d.value);
+            })
+            .on("mouseout", ()=>{
+                d3.selectAll(".bar-labels").transition().duration(100).remove();
+            }).call((enter) =>
+              enter
+                .transition(t)
+                .attr("height", (d) => d.height)
+                .attr("y", (d) => height - d.height - margin.bottom)
+            ),
         (update) =>
           update.call((update) =>
             update
               .transition(t)
               .delay((d, i) => i * 8)
-              .attr("x", (d) => d.x)
-              .attr("y", (d) => d.y)
+              .attr("height", (d) => d.height)
+              .attr("y", (d) => height - d.height - margin.bottom)
           ),
         (exit) => exit.remove()
       );
@@ -128,15 +144,15 @@ export const barChart = () => {
       .selectAll("g.yAxis")
       .data([null])
       .join("g")
-      .attr("class", "yAxis")
-      .attr("transform", `translate(${margin.left},0)`)
-      .call(d3.axisLeft(y));
+      .attr("class", "yAxis tick-labels")
+      .attr("transform", `translate(${margin.left},${margin.top})`)
+      .call(d3.axisLeft(heightScale));
 
     selection
       .selectAll("g.xAxis")
       .data([null])
       .join("g")
-      .attr("class", "xAxis")
+      .attr("class", "xAxis tick-labels")
       .attr("transform", `translate(0, ${height - margin.bottom})`)
       .transition(t)
       .call(d3.axisBottom(x));

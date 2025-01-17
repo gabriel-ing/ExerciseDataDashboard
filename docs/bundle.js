@@ -1503,6 +1503,12 @@
         : new Selection$1([[selector]], root);
   }
 
+  function selectAll(selector) {
+    return typeof selector === "string"
+        ? new Selection$1([document.querySelectorAll(selector)], [document.documentElement])
+        : new Selection$1([array(selector)], root);
+  }
+
   function define(constructor, factory, prototype) {
     constructor.prototype = factory.prototype = prototype;
     prototype.constructor = constructor;
@@ -5437,7 +5443,7 @@
     let data;
     let yValue;
     let xValue;
-    let margin = { top: 50, right: 50, bottom: 80, left: 50 };
+    let margin = { top: 50, right: 50, bottom: 50, left: 80 };
     let radius = 5;
     let colorValue;
     let colorList = [
@@ -5456,7 +5462,7 @@
     let xType;
     let yType;
     let x;
-    let y;
+    let heightScale;
     let filterOne = null;
     let filterTwo = null;
 
@@ -5465,7 +5471,7 @@
 
       //console.log(data);
       let filteredData = data;
-
+      let axisHeight = height - margin.top - margin.bottom;
       if (filterOne) {
         filteredData = filteredData.filter(filterOne);
       }
@@ -5474,17 +5480,15 @@
       }
       console.log(filteredData);
 
+      x = band()
+        .domain(filteredData.map(xValue))
+        .range([margin.left, width])
+        .padding(0.2);
 
-        x = band()
-          .domain(filteredData.map(xValue))
-          .range([margin.left, width - margin.right])
-          .padding(0.2);
-      
+      heightScale = linear()
+        .domain([0, max(filteredData, yValue)])
+        .range([axisHeight, 0]);
 
-        y = linear()
-          .domain([0, max(filteredData, yValue)])
-          .range([height - margin.bottom, margin.top]);
-      
       /* 
           const x = d3
           .scaleLinear()
@@ -5498,18 +5502,20 @@
           
           
           */
-      if (colorValue){
-      ordinal()
-        .domain(filteredData.map(colorValue))
-        .range(colorList);
-      }    // marks.x = x(marks.x);
+      if (colorValue) {
+        ordinal()
+          .domain(filteredData.map(colorValue))
+          .range(colorList);
+      }
+      // marks.x = x(marks.x);
       // marks.y = y(marks.y) ;
       // marks.color = colorScale(marks.color);
 
       const marks = filteredData.map((d) => ({
         x: x(xValue(d)),
-        height: y(yValue(d)),
+        height: axisHeight - heightScale(yValue(d)),
         color: "#F2B8D5",
+        value: yValue(d).toFixed(1),
       }));
 
       const t = transition().duration(1000);
@@ -5524,20 +5530,37 @@
               .append("rect")
               .attr("class", "bar")
               .attr("x", (d) => d.x)
-              .attr("y", (d) => height+margin.bottom)
+              .attr("y", (d) => height - margin.bottom)
               .attr("height", 0)
-              .attr("width", 50)
+              .attr("width", x.bandwidth())
               .attr("fill", (d) => d.color)
               .attr("stroke", "black")
               .attr("stroke-width", 0.5)
-              .call((enter) => enter.transition(t).attr("height", (d) => d.height)),
+              .on("mouseover", (event, d) => {
+                selection
+                  .append("text")
+                  .attr("class", "bar-labels")
+                  .attr("text-anchor", "middle")
+                  .attr("x", d.x+(x.bandwidth()/2))
+                  .attr("y", height - margin.bottom - d.height - 10)
+                  .transition().duration(100)
+                  .text(d.value);
+              })
+              .on("mouseout", ()=>{
+                  selectAll(".bar-labels").transition().duration(100).remove();
+              }).call((enter) =>
+                enter
+                  .transition(t)
+                  .attr("height", (d) => d.height)
+                  .attr("y", (d) => height - d.height - margin.bottom)
+              ),
           (update) =>
             update.call((update) =>
               update
                 .transition(t)
                 .delay((d, i) => i * 8)
-                .attr("x", (d) => d.x)
-                .attr("y", (d) => d.y)
+                .attr("height", (d) => d.height)
+                .attr("y", (d) => height - d.height - margin.bottom)
             ),
           (exit) => exit.remove()
         );
@@ -5555,15 +5578,15 @@
         .selectAll("g.yAxis")
         .data([null])
         .join("g")
-        .attr("class", "yAxis")
-        .attr("transform", `translate(${margin.left},0)`)
-        .call(axisLeft(y));
+        .attr("class", "yAxis tick-labels")
+        .attr("transform", `translate(${margin.left},${margin.top})`)
+        .call(axisLeft(heightScale));
 
       selection
         .selectAll("g.xAxis")
         .data([null])
         .join("g")
-        .attr("class", "xAxis")
+        .attr("class", "xAxis tick-labels")
         .attr("transform", `translate(0, ${height - margin.bottom})`)
         .transition(t)
         .call(axisBottom(x));
@@ -5653,7 +5676,7 @@
     return weekNo;
   }
 
-  function getDistancePerWeek(data, filterOne = null, filterTwo = null) {
+  function getDistancePerWeek(data, year = "all", activityType = "all") {
     let filteredData = data;
 
     filteredData.map((d) => {
@@ -5662,11 +5685,11 @@
       return d;
     });
 
-    if (filterOne) {
-      filteredData = filteredData.filter(filterOne);
+    if (year!="all") {
+      filteredData = filteredData.filter((d)=>d.start_year===+year);
     }
-    if (filterTwo) {
-      filteredData = filteredData.filter(filterTwo);
+    if (activityType!="all") {
+      filteredData = filteredData.filter((d)=>d.sport_type===activityType);
     }
     const result = Object.groupBy(filteredData, ({ start_week }) => start_week);
 
@@ -5693,11 +5716,13 @@
     return distancePerWeek;
   }
 
+  let yearValue = "all"; 
+  let activityValue = "all";
+
   const menuContainer = select("#header");
 
   const xMenu = menuContainer.append("div").attr("class", "menu");
   const yMenu = menuContainer.append("div").attr("class", "menu");
-
 
   const yearOptions = [
     { value: "all", text: "All" },
@@ -5720,27 +5745,45 @@
   const scatterplot = select("#chart1").append("svg");
   const barChartSelection = select("#chart2").append("svg");
 
-
   async function main() {
     let data = await getData();
     //console.log(data);
-  //   console.log(data);
-  //   console.log("change");
+    //   console.log(data);
+    //   console.log("change");
     const plot1 = scatterPlot()
       .width(1000)
       .height(500)
       .data(data)
       .xValue((d) => d.start_date)
-      .yValue((d) => d.distance/1000)
+      .yValue((d) => d.distance / 1000)
       .xType("time")
       .margin({ top: 50, right: 50, bottom: 50, left: 80 })
       .radius(5)
       .xLabel("Date")
       .yLabel("Distance")
-      .tooltipValue((d)=> `<h4>${d.name}</h4><p>${(d.distance/1000).toFixed(1)}km<br>${d.start_date.toDateString()} `)
+      .tooltipValue(
+        (d) =>
+          `<h4>${d.name}</h4><p>${(d.distance / 1000).toFixed(
+          1
+        )}km<br>${d.start_date.toDateString()} `
+      )
       .colorValue((d) => d.sport_type);
 
     scatterplot.call(plot1);
+
+    let weeklyDistanceData = getDistancePerWeek(data, "all", "all");
+    console.log("weekly data", weeklyDistanceData);
+
+    const bc = barChart()
+      .width(1000)
+      .height(500)
+      .data(weeklyDistanceData)
+      .yValue((d) => d.distance / 1000)
+      .xValue((d) => d.week)
+      .yLabel("Distance tracked (km)")
+      .xLabel("Week of Year");
+
+    barChartSelection.call(bc);
 
     xMenu.call(
       menu()
@@ -5749,12 +5792,16 @@
         .options(yearOptions)
         .on("change", (value) => {
           console.log(value);
+          yearValue = value;
           if (value != "all") {
             plot1.filterOne((d) => d.start_date.getFullYear() === +value);
           } else {
             plot1.filterOne(null);
           }
           scatterplot.call(plot1);
+          weeklyDistanceData = getDistancePerWeek(data, yearValue, activityValue);
+          bc.data(weeklyDistanceData);
+          barChartSelection.call(bc);
         })
     );
 
@@ -5764,31 +5811,18 @@
         .labelText("Activity Type:")
         .options(activityTypeOptions)
         .on("change", (value) => {
-          console.log(value);
+          activityValue = value;
           if (value != "all") {
-              plot1.filterTwo((d) => d.sport_type === value);
-            } else {
-              plot1.filterTwo(null);
-            }
-            scatterplot.call(plot1);
+            plot1.filterTwo((d) => d.sport_type === value);
+          } else {
+            plot1.filterTwo(null);
+          }
+          scatterplot.call(plot1);
+          weeklyDistanceData = getDistancePerWeek(data, yearValue, activityValue);
+          bc.data(weeklyDistanceData);
+          barChartSelection.call(bc);
         })
     );
-
-    let weeklyDistanceData = getDistancePerWeek(data, (d)=>d.start_date.getFullYear()==2024, (d) => d.sport_type=="Run");
-    console.log("weekly data", weeklyDistanceData);
-
-
-    const bc = barChart()
-    .width(1000)
-    .height(500)
-    .data(weeklyDistanceData)
-    .yValue((d)=> d.distance)
-    .xValue((d)=> d.week);
-
-
-    barChartSelection.call(bc);
-
-
 
   }
 
