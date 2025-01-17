@@ -1,3 +1,7 @@
+const parseRow = (d) => {
+  d.start_date = new Date(d.start_date);
+  return d} 
+
 export async function getData() {
   const authUrl = "https://www.strava.com/oauth/token";
   const payload = {
@@ -36,7 +40,6 @@ export async function getData() {
         }
       );
       const result = await fetch(activityRequest);
-      console.log(result);
       if (!result.ok) {
         throw new Error(`Response status: ${result.status}`);
         return 0;
@@ -47,9 +50,12 @@ export async function getData() {
       pageNumber += 1;
       if (newData.length < 200) {
         allDataDownloaded = true;
-        console.log("data downloaded");
+        // console.log("data downloaded");
       }
     }
+
+    data.map(parseRow);
+
     return data;
   } catch (error) {
     console.error("Error:", error);

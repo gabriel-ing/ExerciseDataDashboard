@@ -1,0 +1,48 @@
+<!DOCTYPE html>
+<head>
+  <link
+    href="https://fonts.googleapis.com/css2?family=Roboto:ital,wght@0,100;0,300;0,400;0,500;0,700;0,900;1,100;1,300;1,400;1,500;1,700;1,900&display=swap"
+    rel="stylesheet"
+  />
+  <title>Running Dashboard</title>
+</head>
+<style>
+  * {
+    font-family: roboto;
+  }
+  #header{
+    position:sticky;
+    top:0;
+    height:50px;
+    width: 100%;
+    background-color:rgb(255, 155, 155);
+    line-height: 10px;
+    padding:10px;
+    display:flex;
+    margin-bottom: 50px;
+  }
+  .menu{
+    margin:20px;
+  }
+  /* #chart-container{
+    display:flex;
+    gap: 10px;
+  } */
+  .chart{
+    border: 1px solid grey;
+    border-radius: 10px;
+  }
+</style>
+<body>
+  <div class = "header" id="header">
+    <div><h1>Exercise data dashboard</h1></div>
+  </div>
+  <div id="chart-container">
+  <div class="chart" id="chart1"></div>
+  <div class="chart" id="chart2"></div>
+  <div class="chart" id="chart3"></div>
+  <div class="chart" id="chart4"></div>
+</div>
+  <script src="bundle.js"></script>
+   <!-- <script src="main.js" ></script> -->
+</body>
