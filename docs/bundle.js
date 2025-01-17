@@ -5193,12 +5193,24 @@
     let y;
     let filterOne = null;
     let filterTwo = null;
-    let additionalClickFunction = (event, d)=>null;
+    let additionalClickFunction = (event, d) => null;
+    let backgroundOnClick = () => null;
 
     const my = (selection) => {
       selection.attr("width", width).attr("height", height);
 
-      // const selection.append
+      console.log(selection);
+      const backgroundRect = selection
+        .selectAll(".backgroundRect")
+        .data([null])
+        .join("rect")
+        .attr("class", "backgroundRect")
+        .attr("width", width)
+        .attr("height", height)
+        .attr("fill", "white")
+        .attr("opacity", 0)
+        .on("click", backgroundOnClick);
+      console.log(backgroundRect);
       //console.log(data);
       let filteredData = data;
 
@@ -5209,7 +5221,6 @@
         filteredData = filteredData.filter(filterTwo);
       }
       if (tooltipValue(filteredData[0])) {
-        
         tooltip = select("body").append("div").attr("id", "tooltip");
         const tooltipStyles = {
           position: "absolute",
@@ -5219,7 +5230,7 @@
           padding: "2px",
           "border-radius": "5px",
           "font-size": "11px",
-          "line-height":"12px",
+          "line-height": "12px",
         };
         Object.entries(tooltipStyles).forEach(([prop, value]) =>
           tooltip.style(prop, value)
@@ -5240,7 +5251,6 @@
           .padding(0.2);
       }
       if (xType === "time") {
-        
         x = time()
           .domain(extent(filteredData, xValue))
           .range([margin.left, width - margin.right]);
@@ -5288,7 +5298,7 @@
         r: radius,
         color: colorScale(colorValue(d)),
         tooltip: tooltipValue(d),
-        summary_polyline: d.map.summary_polyline
+        summary_polyline: d.map.summary_polyline,
       }));
 
       const t = transition().duration(1000);
@@ -5324,7 +5334,7 @@
                   tooltip.transition().duration(200).style("opacity", 0);
                 }
               })
-              .on("click", (event, d)=>{
+              .on("click", (event, d) => {
                 additionalClickFunction(event, d);
               })
               .call((enter) => enter.transition(t).attr("r", (d) => d.r)),
@@ -5387,14 +5397,14 @@
         .attr("transform", `rotate(-90, ${margin.left / 3}, ${height / 2})`)
         .text(yLabel);
 
-        // selection
-        // .append("rect")
-        // .attr("width", width)
-        // .attr("height", height)
-        // .attr("opacity", 0)
-        // .on("click", () => {
-        //     d3.select("#map").remove();
-        // });
+      // selection
+      // .append("rect")
+      // .attr("width", width)
+      // .attr("height", height)
+      // .attr("opacity", 0)
+      // .on("click", () => {
+      //     d3.select("#map").remove();
+      // });
     };
 
     my.width = function (_) {
@@ -5449,12 +5459,13 @@
       return arguments.length ? ((filterTwo = _), my) : filterTwo;
     };
     my.additionalClickFunction = function (_) {
-      return arguments.length ? ((additionalClickFunction = _), my) : additionalClickFunction;
+      return arguments.length
+        ? ((additionalClickFunction = _), my)
+        : additionalClickFunction;
     };
-    my.additionalClickFunction = function (_) {
-      return arguments.length ? ((additionalClickFunction = _), my) : additionalClickFunction;
+    my.backgroundOnClick = function (_) {
+      return arguments.length ? ((backgroundOnClick = _), my) : backgroundOnClick;
     };
-
     return my;
   };
 
@@ -20472,6 +20483,9 @@
   const scatterplot = select("#chart1").append("svg");
   const barChartSelection = select("#chart2").append("svg");
 
+  const backgroundClick = () => {
+    select("#map").remove();
+  };
   async function main() {
     let data = await getData();
     //console.log(data);
@@ -20500,11 +20514,12 @@
         select("body")
           .append("div")
           .attr("id", "map")
-          .style("top", `${event.pageY +5}px`)
-          .style("left", `${event.pageX  -205}px`);
-        console.log(`${event.pageX + 5}px`);
+          .style("top", `${event.pageY -75}px`)
+          .style("left", `${event.pageX - 210}px`);
+        
         createMap(d.summary_polyline, "map");
-      });
+      })
+      .backgroundOnClick(backgroundClick);
     scatterplot.call(plot1);
 
     let weeklyDistanceData = getDistancePerWeek(data, "all", "all");

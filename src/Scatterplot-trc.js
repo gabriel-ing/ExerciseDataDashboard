@@ -29,13 +29,24 @@ export const scatterPlot = () => {
   let y;
   let filterOne = null;
   let filterTwo = null;
-  let additionalClickFunction = (event, d)=>null;
-  let extraFunction = (selection) => null;
+  let additionalClickFunction = (event, d) => null;
+  let backgroundOnClick = () => null;
 
   const my = (selection) => {
     selection.attr("width", width).attr("height", height);
 
-    // const selection.append
+    console.log(selection);
+    const backgroundRect = selection
+      .selectAll(".backgroundRect")
+      .data([null])
+      .join("rect")
+      .attr("class", "backgroundRect")
+      .attr("width", width)
+      .attr("height", height)
+      .attr("fill", "white")
+      .attr("opacity", 0)
+      .on("click", backgroundOnClick);
+    console.log(backgroundRect);
     //console.log(data);
     let filteredData = data;
 
@@ -46,7 +57,6 @@ export const scatterPlot = () => {
       filteredData = filteredData.filter(filterTwo);
     }
     if (tooltipValue(filteredData[0])) {
-      
       tooltip = d3.select("body").append("div").attr("id", "tooltip");
       const tooltipStyles = {
         position: "absolute",
@@ -56,7 +66,7 @@ export const scatterPlot = () => {
         padding: "2px",
         "border-radius": "5px",
         "font-size": "11px",
-        "line-height":"12px",
+        "line-height": "12px",
       };
       Object.entries(tooltipStyles).forEach(([prop, value]) =>
         tooltip.style(prop, value)
@@ -78,7 +88,6 @@ export const scatterPlot = () => {
         .padding(0.2);
     }
     if (xType === "time") {
-      
       x = d3
         .scaleTime()
         .domain(d3.extent(filteredData, xValue))
@@ -131,7 +140,7 @@ export const scatterPlot = () => {
       r: radius,
       color: colorScale(colorValue(d)),
       tooltip: tooltipValue(d),
-      summary_polyline: d.map.summary_polyline
+      summary_polyline: d.map.summary_polyline,
     }));
 
     const t = d3.transition().duration(1000);
@@ -153,7 +162,7 @@ export const scatterPlot = () => {
             .attr("r", 0)
             .on("mouseover", (event, d) => {
               if (d.tooltip) {
-                tooltip = d3.select("#tooltip")
+                tooltip = d3.select("#tooltip");
                 tooltip
                   .html(d.tooltip)
                   .style("left", `${event.pageX + 5}px`)
@@ -167,7 +176,7 @@ export const scatterPlot = () => {
                 tooltip.transition().duration(200).style("opacity", 0);
               }
             })
-            .on("click", (event, d)=>{
+            .on("click", (event, d) => {
               additionalClickFunction(event, d);
             })
             .call((enter) => enter.transition(t).attr("r", (d) => d.r)),
@@ -230,14 +239,14 @@ export const scatterPlot = () => {
       .attr("transform", `rotate(-90, ${margin.left / 3}, ${height / 2})`)
       .text(yLabel);
 
-      // selection
-      // .append("rect")
-      // .attr("width", width)
-      // .attr("height", height)
-      // .attr("opacity", 0)
-      // .on("click", () => {
-      //     d3.select("#map").remove();
-      // });
+    // selection
+    // .append("rect")
+    // .attr("width", width)
+    // .attr("height", height)
+    // .attr("opacity", 0)
+    // .on("click", () => {
+    //     d3.select("#map").remove();
+    // });
   };
 
   my.width = function (_) {
@@ -292,16 +301,12 @@ export const scatterPlot = () => {
     return arguments.length ? ((filterTwo = _), my) : filterTwo;
   };
   my.additionalClickFunction = function (_) {
-    return arguments.length ? ((additionalClickFunction = _), my) : additionalClickFunction;
+    return arguments.length
+      ? ((additionalClickFunction = _), my)
+      : additionalClickFunction;
   };
-  my.additionalClickFunction = function (_) {
-    return arguments.length ? ((additionalClickFunction = _), my) : additionalClickFunction;
+  my.backgroundOnClick = function (_) {
+    return arguments.length ? ((backgroundOnClick = _), my) : backgroundOnClick;
   };
-
-  return my;
-  my.extraFunction = function (_) {
-    return arguments.length ? ((extraFunction = _), my) : extraFunction;
-  };
-
   return my;
 };

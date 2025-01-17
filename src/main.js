@@ -35,6 +35,9 @@ const activityTypeOptions = [
 const scatterplot = d3.select("#chart1").append("svg");
 const barChartSelection = d3.select("#chart2").append("svg");
 
+const backgroundClick = () => {
+  d3.select("#map").remove();
+};
 async function main() {
   let data = await getData();
   //console.log(data);
@@ -63,11 +66,12 @@ async function main() {
       d3.select("body")
         .append("div")
         .attr("id", "map")
-        .style("top", `${event.pageY +5}px`)
-        .style("left", `${event.pageX  -205}px`);
-      console.log(`${event.pageX + 5}px`);
+        .style("top", `${event.pageY -75}px`)
+        .style("left", `${event.pageX - 210}px`);
+      
       createMap(d.summary_polyline, "map");
-    });
+    })
+    .backgroundOnClick(backgroundClick);
   scatterplot.call(plot1);
 
   let weeklyDistanceData = getDistancePerWeek(data, "all", "all");
