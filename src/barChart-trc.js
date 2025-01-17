@@ -41,7 +41,7 @@ export const barChart = () => {
     if (filterTwo) {
       filteredData = filteredData.filter(filterTwo);
     }
-    console.log(filteredData);
+    //console.log(filteredData);
 
     x = d3
       .scaleBand()

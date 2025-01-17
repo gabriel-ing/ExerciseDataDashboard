@@ -29,10 +29,13 @@ export const scatterPlot = () => {
   let y;
   let filterOne = null;
   let filterTwo = null;
+  let additionalClickFunction = (event, d)=>null;
+  let extraFunction = (selection) => null;
 
   const my = (selection) => {
     selection.attr("width", width).attr("height", height);
 
+    // const selection.append
     //console.log(data);
     let filteredData = data;
 
@@ -59,7 +62,7 @@ export const scatterPlot = () => {
         tooltip.style(prop, value)
       );
     }
-    console.log(filteredData);
+    //console.log(filteredData);
     //create x and y scales using the
     // xValue and yValue functions defined above
     // Top version is the axis defined by the data range, bottom starts from zero.
@@ -128,6 +131,7 @@ export const scatterPlot = () => {
       r: radius,
       color: colorScale(colorValue(d)),
       tooltip: tooltipValue(d),
+      summary_polyline: d.map.summary_polyline
     }));
 
     const t = d3.transition().duration(1000);
@@ -162,6 +166,9 @@ export const scatterPlot = () => {
                 tooltip = d3.select("#tooltip");
                 tooltip.transition().duration(200).style("opacity", 0);
               }
+            })
+            .on("click", (event, d)=>{
+              additionalClickFunction(event, d);
             })
             .call((enter) => enter.transition(t).attr("r", (d) => d.r)),
         (update) =>
@@ -222,6 +229,15 @@ export const scatterPlot = () => {
       .attr("text-anchor", "middle")
       .attr("transform", `rotate(-90, ${margin.left / 3}, ${height / 2})`)
       .text(yLabel);
+
+      // selection
+      // .append("rect")
+      // .attr("width", width)
+      // .attr("height", height)
+      // .attr("opacity", 0)
+      // .on("click", () => {
+      //     d3.select("#map").remove();
+      // });
   };
 
   my.width = function (_) {
@@ -274,6 +290,17 @@ export const scatterPlot = () => {
   };
   my.filterTwo = function (_) {
     return arguments.length ? ((filterTwo = _), my) : filterTwo;
+  };
+  my.additionalClickFunction = function (_) {
+    return arguments.length ? ((additionalClickFunction = _), my) : additionalClickFunction;
+  };
+  my.additionalClickFunction = function (_) {
+    return arguments.length ? ((additionalClickFunction = _), my) : additionalClickFunction;
+  };
+
+  return my;
+  my.extraFunction = function (_) {
+    return arguments.length ? ((extraFunction = _), my) : extraFunction;
   };
 
   return my;

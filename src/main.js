@@ -4,8 +4,9 @@ import { scatterPlot } from "./Scatterplot-trc";
 import * as d3 from "d3";
 import { barChart } from "./barChart-trc.js";
 import { getDistancePerWeek } from "./getWeeklyData.js";
+import { createMap } from "./createMap.js";
 
-let yearValue = "all"; 
+let yearValue = "all";
 let activityValue = "all";
 
 const menuContainer = d3.select("#header");
@@ -56,12 +57,21 @@ async function main() {
           1
         )}km<br>${d.start_date.toDateString()} `
     )
-    .colorValue((d) => d.sport_type);
-
+    .colorValue((d) => d.sport_type)
+    .additionalClickFunction((event, d) => {
+      d3.select("#map").remove();
+      d3.select("body")
+        .append("div")
+        .attr("id", "map")
+        .style("top", `${event.pageY +5}px`)
+        .style("left", `${event.pageX  -205}px`);
+      console.log(`${event.pageX + 5}px`);
+      createMap(d.summary_polyline, "map");
+    });
   scatterplot.call(plot1);
 
   let weeklyDistanceData = getDistancePerWeek(data, "all", "all");
-  console.log("weekly data", weeklyDistanceData);
+  //console.log("weekly data", weeklyDistanceData);
 
   const bc = barChart()
     .width(1000)
@@ -90,7 +100,7 @@ async function main() {
         scatterplot.call(plot1);
         weeklyDistanceData = getDistancePerWeek(data, yearValue, activityValue);
         bc.data(weeklyDistanceData);
-        barChartSelection.call(bc)
+        barChartSelection.call(bc);
       })
   );
 
@@ -112,7 +122,7 @@ async function main() {
         barChartSelection.call(bc);
       })
   );
-
+  //   console.log(data[0].map.summary_polyline);
 }
 
 main();
