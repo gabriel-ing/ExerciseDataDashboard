@@ -20488,9 +20488,21 @@
   };
   async function main() {
     let data = await getData();
-    //console.log(data);
+    console.log(data);
     //   console.log(data);
     //   console.log("change");
+
+    const data2025 = data.filter((d) => {
+    const year = new Date(d.start_date).getFullYear();
+    return (year === 2025)&(d.sport_type=="Run") ;
+    });
+    
+    const totalDistance = data2025.reduce((sum, d) => sum + d.distance, 0);
+
+    document.getElementById("distance").innerHTML = (totalDistance/1000).toFixed(1);
+    // console.log(Object.keys(data[0]))
+    console.log(data2025);
+
     const plot1 = scatterPlot()
       .width(1000)
       .height(500)
@@ -20514,9 +20526,9 @@
         select("body")
           .append("div")
           .attr("id", "map")
-          .style("top", `${event.pageY -75}px`)
+          .style("top", `${event.pageY - 75}px`)
           .style("left", `${event.pageX - 210}px`);
-        
+
         createMap(d.summary_polyline, "map");
       })
       .backgroundOnClick(backgroundClick);
